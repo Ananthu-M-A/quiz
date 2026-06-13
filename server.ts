@@ -6,6 +6,8 @@ import { nanoid } from "nanoid";
 
 import { quizStore } from "./lib/quizStore";
 
+import { Question } from "./lib/types";
+
 const dev = process.env.NODE_ENV !== "production";
 
 const app = next({ dev });
@@ -86,6 +88,14 @@ app.prepare().then(() => {
 
         socket.join(code);
 
+        socket.emit(
+          "joined-session",
+          {
+            participantId: participant.id,
+            code
+          }
+        );
+
         io.to(code).emit(
           "participants-updated",
           session.participants
@@ -132,6 +142,132 @@ app.prepare().then(() => {
         socket.emit(
           "participants-updated",
           session.participants
+        );
+
+      }
+    );
+
+    socket.on(
+      "submit-answer",
+      ({
+        code,
+        participantId,
+        questionId,
+        selectedOption,
+        timeTaken
+      }: {
+        code: string;
+        participantId: string;
+        questionId: string;
+        selectedOption: number;
+        timeTaken: number;
+      }) => {
+
+        const session =
+          quizStore[code];
+
+        if (!session) return;
+
+        const question =
+          session.questions.find(
+            (q) => q.id === questionId
+          );
+
+        if (!question) return;
+
+        const isCorrect =
+          question.correctAnswer ===
+          selectedOption;
+
+        const participant =
+          session.participants.find(
+            (p) => p.id === participantId
+          );
+
+        if (participant && isCorrect) {
+          participant.score += 1;
+          participant.totalTime +=
+            timeTaken;
+        }
+
+        session.answers.push({
+          participantId,
+          questionId,
+          selectedOption,
+          timeTaken
+        });
+
+      }
+    );
+
+    socket.on(
+      "next-question",
+      (code: string) => {
+
+        const session =
+          quizStore[code];
+
+        if (!session) return;
+
+        if (
+          session.currentQuestionIndex <
+          session.questions.length - 1
+        ) {
+          session.currentQuestionIndex +=
+            1;
+
+          const nextQuestion =
+            session.questions[
+              session.currentQuestionIndex
+            ];
+
+          io.to(code).emit(
+            "question-updated",
+            {
+              question:
+                nextQuestion,
+              questionIndex:
+                session.currentQuestionIndex
+            }
+          );
+        } else {
+
+          session.status =
+            "completed";
+
+          const winners =
+            session.participants
+              .sort(
+                (a, b) => {
+                  if (b.score !== a.score) {
+                    return b.score -
+                      a.score;
+                  }
+                  return a.totalTime -
+                    b.totalTime;
+                }
+              )
+              .slice(0, 3);
+
+          io.to(code).emit(
+            "quiz-completed",
+            {
+              winners
+            }
+          );
+
+        }
+
+      }
+    );
+
+    socket.on(
+      "disconnect",
+      () => {
+
+        console.log(
+          "disconnected",
+          socket.id
         );
 
       }

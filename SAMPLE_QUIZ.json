@@ -1,0 +1,50 @@
+[
+  {
+    "id": "q1",
+    "question": "What is the capital of India?",
+    "options": ["Mumbai", "Delhi", "Bangalore", "Chennai"],
+    "correctAnswer": 1
+  },
+  {
+    "id": "q2",
+    "question": "Which planet is known as the Red Planet?",
+    "options": ["Venus", "Mars", "Jupiter", "Saturn"],
+    "correctAnswer": 1
+  },
+  {
+    "id": "q3",
+    "question": "What is 25 × 4?",
+    "options": ["50", "75", "100", "125"],
+    "correctAnswer": 2
+  },
+  {
+    "id": "q4",
+    "question": "Who wrote Romeo and Juliet?",
+    "options": ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+    "correctAnswer": 1
+  },
+  {
+    "id": "q5",
+    "question": "What is the largest ocean on Earth?",
+    "options": ["Atlantic Ocean", "Indian Ocean", "Pacific Ocean", "Arctic Ocean"],
+    "correctAnswer": 2
+  },
+  {
+    "id": "q6",
+    "question": "In what year did the Titanic sink?",
+    "options": ["1912", "1915", "1920", "1905"],
+    "correctAnswer": 0
+  },
+  {
+    "id": "q7",
+    "question": "What is the chemical symbol for Gold?",
+    "options": ["Go", "Gd", "Au", "Ag"],
+    "correctAnswer": 2
+  },
+  {
+    "id": "q8",
+    "question": "Which country is home to the kangaroo?",
+    "options": ["New Zealand", "Australia", "South Africa", "Brazil"],
+    "correctAnswer": 1
+  }
+]

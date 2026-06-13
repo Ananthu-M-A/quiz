@@ -1,123 +1,149 @@
 "use client";
 
-import { useEffect } from "react";
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import { socket } from "@/lib/socket";
 
 export default function JoinPage() {
+    const [name, setName] = useState("");
+    const [code, setCode] = useState("");
+    const [joined, setJoined] = useState(false);
+    const [message, setMessage] = useState("Waiting for host to start the quiz...");
+    const [error, setError] = useState("");
 
-  const [name,
-    setName] =
-    useState("");
+    useEffect(() => {
+        socket.connect();
 
-  const [code,
-    setCode] =
-    useState("");
+        socket.on("quiz-started", (data: { question: any; questionIndex: number }) => {
+            setMessage("Quiz Started! Redirecting...");
+            setTimeout(() => {
+                window.location.href = `/quiz/${code}`;
+            }, 500);
+        });
 
-  const [joined,
-    setJoined] =
-    useState(false);
+        socket.on("error-message", (errorMsg: string) => {
+            setError(errorMsg);
+            setJoined(false);
+        });
 
-  const [message,
-    setMessage] =
-    useState(
-      "Waiting for host..."
-    );
-
-  useEffect(() => {
-
-    socket.connect();
-
-    socket.on(
-      "quiz-started",
-      () => {
-
-        setMessage(
-          "Quiz Started!"
+        socket.on(
+            "joined-session",
+            (data: { participantId: string; code: string }) => {
+                localStorage.setItem(`participant-${data.code}`, data.participantId);
+            }
         );
 
-        window.location.href =
-          `/quiz/${code}`;
+        return () => {
+            socket.off("quiz-started");
+            socket.off("error-message");
+            socket.off("joined-session");
+        };
+    }, [code]);
 
-      }
-    );
+    const joinQuiz = () => {
+        if (!name.trim()) {
+            setError("Please enter your name");
+            return;
+        }
 
-    return () => {
+        if (!code.trim()) {
+            setError("Please enter the quiz code");
+            return;
+        }
 
-      socket.off(
-        "quiz-started"
-      );
+        setError("");
 
+        socket.emit("join-session", {
+            name: name.trim(),
+            code: code.trim()
+        });
+
+        setJoined(true);
     };
 
-  }, [code]);
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+            joinQuiz();
+        }
+    };
 
-  const joinQuiz = () => {
-
-    socket.emit(
-      "join-session",
-      {
-        name,
-        code
-      }
-    );
-
-    setJoined(true);
-
-  };
-
-  if (joined) {
+    if (joined) {
+        return (
+            <main className="flex min-h-screen items-center justify-center bg-linear-to-br from-green-50 to-blue-100 p-6">
+                <div className="text-center">
+                    <h1 className="text-5xl font-bold text-gray-900 mb-4">
+                        Welcome, {name}! 👋
+                    </h1>
+                    <p className="text-2xl text-gray-700 mb-8">{message}</p>
+                    <div className="flex justify-center gap-2 mt-8">
+                        <div className="w-4 h-4 bg-blue-600 rounded-full animate-bounce"></div>
+                        <div
+                            className="w-4 h-4 bg-blue-600 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.2s" }}
+                        ></div>
+                        <div
+                            className="w-4 h-4 bg-blue-600 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.4s" }}
+                        ></div>
+                    </div>
+                </div>
+            </main>
+        );
+    }
 
     return (
+        <main className="flex min-h-screen items-center justify-center bg-linear-to-br from-purple-50 to-pink-100 p-6">
+            <div className="w-full max-w-md bg-white rounded-lg shadow-2xl p-10">
+                <h1 className="text-4xl font-bold text-center mb-2 text-gray-900">
+                    Quiz
+                </h1>
+                <p className="text-center text-gray-600 mb-8">Join a quiz session</p>
 
-      <main className="flex min-h-screen items-center justify-center">
+                {error && (
+                    <div className="bg-red-100 border-2 border-red-500 text-red-700 px-4 py-3 rounded-lg mb-6">
+                        {error}
+                    </div>
+                )}
 
-        <h1 className="text-3xl">
-          {message}
-        </h1>
+                <div className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Your Name
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Enter your name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            className="w-full border-2 border-gray-300 p-4 rounded-lg focus:outline-none focus:border-blue-600 text-lg"
+                            autoFocus
+                        />
+                    </div>
 
-      </main>
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Quiz Code
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Enter quiz code"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value.toUpperCase())}
+                            onKeyPress={handleKeyPress}
+                            maxLength={6}
+                            className="w-full border-2 border-gray-300 p-4 rounded-lg focus:outline-none focus:border-blue-600 text-lg font-mono tracking-widest"
+                        />
+                    </div>
 
+                    <button
+                        onClick={joinQuiz}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg font-bold text-lg transition-all"
+                    >
+                        Join Quiz
+                    </button>
+                </div>
+            </div>
+        </main>
     );
-
-  }
-
-  return (
-
-    <main className="flex flex-col items-center justify-center min-h-screen gap-4">
-
-      <input
-        placeholder="Name"
-        value={name}
-        onChange={(e) =>
-          setName(
-            e.target.value
-          )
-        }
-        className="border p-3"
-      />
-
-      <input
-        placeholder="Quiz Code"
-        value={code}
-        onChange={(e) =>
-          setCode(
-            e.target.value
-          )
-        }
-        className="border p-3"
-      />
-
-      <button
-        onClick={joinQuiz}
-        className="bg-black text-white px-5 py-3"
-      >
-        Join Quiz
-      </button>
-
-    </main>
-
-  );
-
 }
+

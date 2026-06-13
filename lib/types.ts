@@ -21,7 +21,11 @@ export interface Answer {
 
 export interface QuizSession {
   code: string;
-  status: "waiting" | "running" | "completed";
+
+  status:
+    | "waiting"
+    | "running"
+    | "completed";
 
   questions: Question[];
 
@@ -30,10 +34,4 @@ export interface QuizSession {
   answers: Answer[];
 
   currentQuestionIndex: number;
-}
-
-export interface ActiveQuestion {
-  id: string;
-  question: string;
-  options: string[];
 }
