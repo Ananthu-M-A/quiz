@@ -31,3 +31,9 @@ export interface QuizSession {
 
   currentQuestionIndex: number;
 }
+
+export interface ActiveQuestion {
+  id: string;
+  question: string;
+  options: string[];
+}

@@ -93,6 +93,50 @@ app.prepare().then(() => {
       }
     );
 
+    socket.on(
+      "start-quiz",
+      (code: string) => {
+
+        const session =
+          quizStore[code];
+
+        if (!session) return;
+
+        session.status =
+          "running";
+
+        const firstQuestion =
+          session.questions[0];
+
+        io.to(code).emit(
+          "quiz-started",
+          {
+            question:
+              firstQuestion,
+            questionIndex: 0
+          }
+        );
+
+      }
+    );
+
+    socket.on(
+      "get-participants",
+      (code: string) => {
+
+        const session =
+          quizStore[code];
+
+        if (!session) return;
+
+        socket.emit(
+          "participants-updated",
+          session.participants
+        );
+
+      }
+    );
+
   });
 
   httpServer.listen(
