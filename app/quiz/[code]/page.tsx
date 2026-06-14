@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { socket } from "@/lib/socket";
 import { Question } from "@/lib/types";
 
 interface Props {
-    params: {
+    params: Promise<{
         code: string;
-    };
+    }>;
 }
 
-export default function QuizPage({ params }: Props) {
+export default function QuizPage({ params: paramsPromise }: Props) {
+    const params = React.use(paramsPromise);
     const [question, setQuestion] = useState<Question | null>(null);
     const [questionIndex, setQuestionIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
@@ -26,6 +27,11 @@ export default function QuizPage({ params }: Props) {
         const pId = localStorage.getItem(`participant-${normalizedCode}`);
         if (pId) {
             setParticipantId(pId);
+            // Rejoin the quiz room when page loads
+            socket.emit("rejoin-quiz", {
+                code: normalizedCode,
+                participantId: pId
+            });
         }
 
         socket.on("quiz-started", (data: { question: Question; questionIndex: number }) => {
@@ -54,7 +60,7 @@ export default function QuizPage({ params }: Props) {
             socket.off("question-updated");
             socket.off("quiz-completed");
         };
-    }, [params.code]);
+    }, [params]);
 
     useEffect(() => {
         if (!question || submitted || quizEnded) return;

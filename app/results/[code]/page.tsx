@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { socket } from "@/lib/socket";
 import { Participant } from "@/lib/types";
 
 interface Props {
-    params: {
+    params: Promise<{
         code: string;
-    };
+    }>;
 }
 
-export default function ResultsPage({ params }: Props) {
+export default function ResultsPage({ params: paramsPromise }: Props) {
+    const params = React.use(paramsPromise);
     const [winners, setWinners] = useState<Participant[]>([]);
     const [loading, setLoading] = useState(true);
 

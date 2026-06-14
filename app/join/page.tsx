@@ -13,10 +13,10 @@ export default function JoinPage() {
     useEffect(() => {
         socket.connect();
 
-        socket.on("quiz-started", (data: { question: any; questionIndex: number }) => {
+        socket.on("quiz-started", (data: { code: string; question: any; questionIndex: number }) => {
             setMessage("Quiz Started! Redirecting...");
             setTimeout(() => {
-                window.location.href = `/quiz/${code.toUpperCase()}`;
+                window.location.href = `/quiz/${data.code}`;
             }, 500);
         });
 

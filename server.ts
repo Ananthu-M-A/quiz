@@ -79,6 +79,14 @@ app.prepare().then(() => {
           return;
         }
 
+        if (session.status !== "waiting") {
+          socket.emit(
+            "error-message",
+            "Quiz has already started or is completed. Cannot join now."
+          );
+          return;
+        }
+
         const participant = {
           id: nanoid(),
           name,
@@ -108,6 +116,42 @@ app.prepare().then(() => {
     );
 
     socket.on(
+      "rejoin-quiz",
+      ({
+        code,
+        participantId
+      }) => {
+
+        const normalizedCode = code.toUpperCase();
+        const session =
+          quizStore[normalizedCode];
+
+        if (!session) return;
+
+        // Rejoin the socket to the quiz room
+        socket.join(normalizedCode);
+
+        // If quiz is running, send current question
+        if (session.status === "running") {
+          const currentQuestion =
+            session.questions[
+              session.currentQuestionIndex
+            ];
+
+          socket.emit(
+            "question-updated",
+            {
+              question:
+                currentQuestion,
+              questionIndex:
+                session.currentQuestionIndex
+            }
+          );
+        }
+      }
+    );
+
+    socket.on(
       "start-quiz",
       (code: string) => {
 
@@ -126,6 +170,7 @@ app.prepare().then(() => {
         io.to(normalizedCode).emit(
           "quiz-started",
           {
+            code: normalizedCode,
             question:
               firstQuestion,
             questionIndex: 0
