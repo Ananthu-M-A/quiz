@@ -14,6 +14,9 @@ export default function AdminPage() {
     const [totalQuestions, setTotalQuestions] = useState(0);
     const [quizCompleted, setQuizCompleted] = useState(false);
     const [winners, setWinners] = useState<Participant[]>([]);
+    const [showAnswer, setShowAnswer] = useState(false);
+    const [timeElapsed, setTimeElapsed] = useState(0);
+    const [showAnswerButton, setShowAnswerButton] = useState(false);
 
     useEffect(() => {
         socket.connect();
@@ -34,6 +37,9 @@ export default function AdminPage() {
                 setCurrentQuestionIndex(data.questionIndex);
                 setQuizStarted(true);
                 setQuizCompleted(false);
+                setShowAnswer(false);
+                setTimeElapsed(0);
+                setShowAnswerButton(false);
             }
         );
 
@@ -42,6 +48,9 @@ export default function AdminPage() {
             (data: { question: Question; questionIndex: number }) => {
                 setCurrentQuestion(data.question);
                 setCurrentQuestionIndex(data.questionIndex);
+                setShowAnswer(false);
+                setTimeElapsed(0);
+                setShowAnswerButton(false);
             }
         );
 
@@ -87,6 +96,22 @@ export default function AdminPage() {
             alert("Invalid JSON. Please check the format.");
         }
     };
+
+    useEffect(() => {
+        if (!quizStarted || !currentQuestion) return;
+
+        const timer = setInterval(() => {
+            setTimeElapsed((prev) => {
+                const newTime = prev + 1;
+                if (newTime === 30) {
+                    setShowAnswerButton(true);
+                }
+                return newTime;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [quizStarted, currentQuestion, currentQuestionIndex]);
 
     const startQuiz = () => {
         if (quizCode) {
@@ -150,7 +175,7 @@ export default function AdminPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-4 gap-6 mb-8">
                         <div className="bg-white p-6 rounded-lg shadow-lg">
                             <p className="text-gray-600 text-sm">Total Participants</p>
                             <p className="text-4xl font-bold text-blue-600">{participants.length}</p>
@@ -165,40 +190,78 @@ export default function AdminPage() {
                             <p className="text-gray-600 text-sm">Status</p>
                             <p className="text-4xl font-bold text-purple-600">Running</p>
                         </div>
+                        <div className={`p-6 rounded-lg shadow-lg text-center transition-all ${
+                            timeElapsed >= 25 ? 'bg-linear-to-br from-orange-100 to-red-100' : 'bg-white'
+                        }`}>
+                            <p className="text-gray-600 text-sm">Time Elapsed</p>
+                            <p className={`text-4xl font-bold ${
+                                timeElapsed >= 25 ? 'text-red-600 animate-pulse' : 'text-blue-600'
+                            }`}>
+                                {timeElapsed}s
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">/ 30s</p>
+                        </div>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-                        <h2 className="text-2xl font-bold mb-6">{currentQuestion.question}</h2>
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-lg shadow-lg p-8 mb-8 border-2 border-blue-200">
+                        <div className="mb-8">
+                            <h2 className="text-3xl font-bold mb-2 text-blue-900">{currentQuestion.question}</h2>
+                            <div className="h-1 w-20 bg-blue-600 rounded"></div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mb-8">
                             {currentQuestion.options.map((option, index) => (
                                 <div
                                     key={index}
-                                    className="p-4 border-2 border-gray-300 rounded-lg bg-gray-50"
+                                    className={`p-6 border-2 rounded-lg transition-all transform hover:scale-105 ${
+                                        showAnswer && index === currentQuestion.correctAnswer
+                                            ? 'bg-green-100 border-green-500 shadow-lg'
+                                            : 'bg-gray-50 border-gray-300'
+                                    }`}
                                 >
-                                    <p className="font-bold text-gray-700 mb-2">
+                                    <p className="font-bold text-lg mb-2 text-gray-700">
                                         {String.fromCharCode(65 + index)}.
                                     </p>
                                     <p className="text-gray-800">{option}</p>
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-6 p-4 bg-green-100 border-2 border-green-500 rounded-lg">
-                            <p className="text-sm text-gray-700 font-semibold">Correct Answer:</p>
-                            <p className="text-xl font-bold text-green-700">
-                                {String.fromCharCode(65 + currentQuestion.correctAnswer)}.{" "}
-                                {currentQuestion.options[currentQuestion.correctAnswer]}
-                            </p>
+
+                        <div className="flex gap-4 mb-6">
+                            <button
+                                onClick={() => setShowAnswer(true)}
+                                disabled={showAnswer || !showAnswerButton}
+                                className={`flex-1 px-6 py-4 rounded-lg font-bold text-lg transition-all transform ${
+                                    showAnswer
+                                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                        : showAnswerButton
+                                        ? 'bg-linear-to-r from-yellow-500 to-orange-500 text-white hover:scale-105 shadow-lg'
+                                        : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                }`}
+                            >
+                                {showAnswer ? '✓ Answer Revealed' : 'Show Answer'}
+                            </button>
                         </div>
+
+                        {showAnswer && (
+                            <div className="mt-6 p-6 bg-linear-to-r from-green-100 to-emerald-100 border-2 border-green-500 rounded-lg shadow-lg animate-bounce">
+                                <p className="text-sm text-gray-700 font-semibold mb-2">✓ Correct Answer:</p>
+                                <p className="text-2xl font-bold text-green-700">
+                                    {String.fromCharCode(65 + currentQuestion.correctAnswer)}.{" "}
+                                    {currentQuestion.options[currentQuestion.correctAnswer]}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex gap-4 mb-8">
                         <button
                             onClick={nextQuestion}
-                            className="flex-1 bg-blue-600 text-white px-6 py-4 rounded-lg font-bold hover:bg-blue-700 text-lg"
+                            className="flex-1 bg-linear-to-r from-blue-600 to-blue-700 text-white px-6 py-4 rounded-lg font-bold hover:from-blue-700 hover:to-blue-800 text-lg shadow-lg transform hover:scale-105 transition-all"
                         >
                             {currentQuestionIndex === totalQuestions - 1
-                                ? "Finish Quiz"
-                                : "Next Question"}
+                                ? '🏁 Finish Quiz'
+                                : '➡️ Next Question'}
                         </button>
                     </div>
 
