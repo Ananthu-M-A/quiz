@@ -22,10 +22,27 @@ app.prepare().then(() => {
     }
   );
 
-  const io = new Server(httpServer, {
-    cors: {
-      origin: "*"
+  const getAllowedOrigins = () => {
+    const nodeEnv = process.env.NODE_ENV;
+    
+    if (nodeEnv === 'production') {
+      // In production, only allow your subdomain
+      const allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
+      return {
+        origin: [allowedOrigin],
+        credentials: true
+      };
     }
+    
+    // In development, allow all origins
+    return {
+      origin: "*",
+      credentials: false
+    };
+  };
+
+  const io = new Server(httpServer, {
+    cors: getAllowedOrigins()
   });
 
   io.on("connection", (socket) => {
