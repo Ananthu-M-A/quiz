@@ -17,16 +17,22 @@ export default function ResultsPage({ params }: Props) {
     useEffect(() => {
         socket.connect();
 
-        socket.on(
-            "quiz-completed",
-            (data: { winners: Participant[] }) => {
-                setWinners(data.winners);
-                setLoading(false);
-            }
-        );
+        const handleQuizCompleted = (data: { winners: Participant[] }) => {
+            setWinners(data.winners);
+            setLoading(false);
+        };
+
+        socket.on("quiz-completed", handleQuizCompleted);
+
+        // Set a timeout to handle case where event was already emitted before component mounts
+        const timeoutId = setTimeout(() => {
+            setLoading(false);
+            setWinners([]);
+        }, 3000);
 
         return () => {
-            socket.off("quiz-completed");
+            socket.off("quiz-completed", handleQuizCompleted);
+            clearTimeout(timeoutId);
         };
     }, []);
 

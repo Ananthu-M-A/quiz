@@ -67,6 +67,20 @@ export default function AdminPage() {
                 alert("Please provide a valid array of questions");
                 return;
             }
+            
+            // Validate each question
+            for (let i = 0; i < questions.length; i++) {
+                const q = questions[i];
+                if (!q.id || !q.question || !Array.isArray(q.options) || q.options.length === 0) {
+                    alert(`Question ${i + 1} is missing required fields (id, question, options)`);
+                    return;
+                }
+                if (typeof q.correctAnswer !== 'number' || q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
+                    alert(`Question ${i + 1} has invalid correctAnswer index`);
+                    return;
+                }
+            }
+            
             setTotalQuestions(questions.length);
             socket.emit("create-session", questions);
         } catch {

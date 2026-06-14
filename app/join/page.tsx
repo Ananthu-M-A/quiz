@@ -16,7 +16,7 @@ export default function JoinPage() {
         socket.on("quiz-started", (data: { question: any; questionIndex: number }) => {
             setMessage("Quiz Started! Redirecting...");
             setTimeout(() => {
-                window.location.href = `/quiz/${code}`;
+                window.location.href = `/quiz/${code.toUpperCase()}`;
             }, 500);
         });
 
@@ -37,7 +37,7 @@ export default function JoinPage() {
             socket.off("error-message");
             socket.off("joined-session");
         };
-    }, [code]);
+    }, []);
 
     const joinQuiz = () => {
         if (!name.trim()) {

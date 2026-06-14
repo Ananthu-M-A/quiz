@@ -39,7 +39,7 @@ app.prepare().then(() => {
       "create-session",
       (questions) => {
 
-        const code = nanoid(6);
+        const code = nanoid(6).toUpperCase();
 
         quizStore[code] = {
           code,
@@ -64,8 +64,9 @@ app.prepare().then(() => {
         name
       }) => {
 
+        const normalizedCode = code.toUpperCase();
         const session =
-          quizStore[code];
+          quizStore[normalizedCode];
 
         if (!session) {
           socket.emit(
@@ -86,17 +87,17 @@ app.prepare().then(() => {
           participant
         );
 
-        socket.join(code);
+        socket.join(normalizedCode);
 
         socket.emit(
           "joined-session",
           {
             participantId: participant.id,
-            code
+            code: normalizedCode
           }
         );
 
-        io.to(code).emit(
+        io.to(normalizedCode).emit(
           "participants-updated",
           session.participants
         );
@@ -107,8 +108,9 @@ app.prepare().then(() => {
       "start-quiz",
       (code: string) => {
 
+        const normalizedCode = code.toUpperCase();
         const session =
-          quizStore[code];
+          quizStore[normalizedCode];
 
         if (!session) return;
 
@@ -118,7 +120,7 @@ app.prepare().then(() => {
         const firstQuestion =
           session.questions[0];
 
-        io.to(code).emit(
+        io.to(normalizedCode).emit(
           "quiz-started",
           {
             question:
@@ -134,8 +136,9 @@ app.prepare().then(() => {
       "get-participants",
       (code: string) => {
 
+        const normalizedCode = code.toUpperCase();
         const session =
-          quizStore[code];
+          quizStore[normalizedCode];
 
         if (!session) return;
 
@@ -163,8 +166,9 @@ app.prepare().then(() => {
         timeTaken: number;
       }) => {
 
+        const normalizedCode = code.toUpperCase();
         const session =
-          quizStore[code];
+          quizStore[normalizedCode];
 
         if (!session) return;
 
@@ -204,8 +208,9 @@ app.prepare().then(() => {
       "next-question",
       (code: string) => {
 
+        const normalizedCode = code.toUpperCase();
         const session =
-          quizStore[code];
+          quizStore[normalizedCode];
 
         if (!session) return;
 
@@ -221,7 +226,7 @@ app.prepare().then(() => {
               session.currentQuestionIndex
             ];
 
-          io.to(code).emit(
+          io.to(normalizedCode).emit(
             "question-updated",
             {
               question:
@@ -249,7 +254,7 @@ app.prepare().then(() => {
               )
               .slice(0, 3);
 
-          io.to(code).emit(
+          io.to(normalizedCode).emit(
             "quiz-completed",
             {
               winners

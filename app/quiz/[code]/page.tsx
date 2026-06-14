@@ -22,7 +22,8 @@ export default function QuizPage({ params }: Props) {
     useEffect(() => {
         socket.connect();
 
-        const pId = localStorage.getItem(`participant-${params.code}`);
+        const normalizedCode = params.code.toUpperCase();
+        const pId = localStorage.getItem(`participant-${normalizedCode}`);
         if (pId) {
             setParticipantId(pId);
         }
@@ -45,7 +46,7 @@ export default function QuizPage({ params }: Props) {
 
         socket.on("quiz-completed", () => {
             setQuizEnded(true);
-            window.location.href = `/results/${params.code}`;
+            window.location.href = `/results/${params.code.toUpperCase()}`;
         });
 
         return () => {
@@ -73,7 +74,7 @@ export default function QuizPage({ params }: Props) {
         if (selectedOption === null || !question || !participantId) return;
 
         socket.emit("submit-answer", {
-            code: params.code,
+            code: params.code.toUpperCase(),
             participantId,
             questionId: question.id,
             selectedOption,
@@ -87,6 +88,25 @@ export default function QuizPage({ params }: Props) {
         return (
             <main className="flex min-h-screen items-center justify-center">
                 <h1 className="text-4xl">Waiting for quiz to start...</h1>
+            </main>
+        );
+    }
+
+    if (!participantId) {
+        return (
+            <main className="flex min-h-screen items-center justify-center p-6">
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold text-red-600 mb-4">Error</h1>
+                    <p className="text-xl text-gray-700 mb-6">
+                        Invalid session. Please join the quiz again.
+                    </p>
+                    <button
+                        onClick={() => window.location.href = "/join"}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold"
+                    >
+                        Back to Join
+                    </button>
+                </div>
             </main>
         );
     }
