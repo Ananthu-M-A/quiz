@@ -50,6 +50,9 @@ app.prepare().then(() => {
           currentQuestionIndex: 0
         };
 
+        // Admin joins the room to receive updates
+        socket.join(code);
+
         socket.emit(
           "session-created",
           code
